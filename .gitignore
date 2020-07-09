@@ -92,3 +92,5 @@ lint/tmp/
 .idea/
 .gradle/
 build/
+
+googleMaps.gradle
