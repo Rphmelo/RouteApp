@@ -93,4 +93,5 @@ lint/tmp/
 .gradle/
 build/
 
+#Google maps key
 googleMaps.gradle
