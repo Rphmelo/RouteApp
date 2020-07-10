@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
+apply plugin: 'kotlin-kapt'
 
 android {
     compileSdkVersion 29
-
 
     defaultConfig {
         applicationId "com.rphmelo.routeapp"
@@ -18,7 +18,8 @@ android {
 
     buildTypes {
         debug {
-            resValue "string", "google_maps_api_key", "\"${google_maps_api_key}\""
+            resValue "string", "google_maps_api_key", "$google_maps_api_key"
+            buildConfigField "String", "PLACES_API_KEY", "\"$places_api_key\""
         }
 
         release {
@@ -26,6 +27,7 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
 
             resValue "string", "google_maps_api_key", "$google_maps_api_key"
+            buildConfigField "String", "PLACES_API_KEY", "\"$places_api_key\""
         }
     }
 
@@ -37,6 +39,12 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.1.0'
     implementation 'androidx.core:core-ktx:1.0.2'
     implementation 'com.google.android.gms:play-services-maps:17.0.0'
+
+    implementation "com.google.android.libraries.places:places:$places_version"
+    implementation "com.google.dagger:dagger:$dagger_version"
+    kapt "com.google.dagger:dagger-compiler:$dagger_version"
+    kapt "com.google.dagger:dagger-android-processor:$dagger_version"
+
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
