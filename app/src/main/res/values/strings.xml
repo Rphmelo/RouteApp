@@ -1,4 +1,9 @@
 <resources>
     <string name="app_name">RouteApp</string>
     <string name="title_activity_maps">Map</string>
+    <string name="attention">Atenção</string>
+    <string name="ok">Ok</string>
+    <string name="permission_denied_message">Para utilizar o app, você precisa permitir o acesso à localização do aparelho ;)</string>
+    <string name="error_message">Ocorreu um probleminha, mas você pode tentar novamente :)</string>
+    <string name="places_address_not_found_message">Não foi possível carregar o endereço selecionado</string>
 </resources>
