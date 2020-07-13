@@ -5,8 +5,10 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Geocoder
 import android.location.Location
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
+import androidx.appcompat.app.AppCompatActivity
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -17,6 +19,10 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.gms.tasks.Task
+import com.google.android.libraries.places.api.Places
+import com.google.android.libraries.places.widget.Autocomplete
+import com.google.android.libraries.places.widget.AutocompleteActivity
+import com.rphmelo.routeapp.BuildConfig.PLACES_API_KEY
 import com.rphmelo.routeapp.Constants.MAPS_ZOOM_OPTIONS
 import com.rphmelo.routeapp.DialogUtil
 import com.rphmelo.routeapp.R
@@ -32,6 +38,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
     companion object {
         private const val LOCATION_PERMISSION_REQUEST_CODE = 101
         private const val REQUEST_CHECK_SETTINGS = 102
+        private const val AUTOCOMPLETE_REQUEST_CODE = 103
     }
 
     private val locationCallback by lazy {
@@ -47,6 +54,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
     private lateinit var map: GoogleMap
     private val placesAddressNotFoundMessage by lazy { getString(R.string.places_address_not_found_message)}
 
+    @Inject
+    lateinit var autoCompletePlaceIntent: Intent
 
     @Inject
     lateinit var fusedLocationClient: FusedLocationProviderClient
@@ -65,10 +74,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         setUpDagger()
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
-
         createLocationRequest()
 
         (mapFragment as? SupportMapFragment)?.getMapAsync(this)
+        initializePlaces()
     }
 
     override fun onRequestPermissionsResult(
@@ -108,6 +117,21 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                 locationUpdateState = true
                 startLocationUpdates()
             }
+        } else if (requestCode == AUTOCOMPLETE_REQUEST_CODE) {
+            when (resultCode) {
+                RESULT_OK -> {
+                    data?.let {
+                        Autocomplete.getPlaceFromIntent(data)?.latLng?.let {
+                            placeMarkerOnMap(it)
+                        }
+                    }
+
+                }
+                AutocompleteActivity.RESULT_ERROR -> {
+                    DialogUtil.showMessageDialog(this, getString(R.string.error_message))
+                }
+                RESULT_CANCELED -> {}
+            }
         }
     }
 
@@ -121,6 +145,25 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         if (!locationUpdateState) {
             startLocationUpdates()
         }
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.search -> {
+                onSearchCalled()
+                true
+            }
+            R.id.home -> {
+                finish()
+                true
+            }
+            else -> false
+        }
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.search_menu, menu)
+        return super.onCreateOptionsMenu(menu)
     }
 
     private fun createLocationRequest() {
@@ -185,6 +228,16 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
 
     private fun animateMapZoom(latLng: LatLng) {
         map.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, MAPS_ZOOM_OPTIONS))
+    }
+
+    private fun initializePlaces() {
+        if (!Places.isInitialized()) {
+            Places.initialize(this, PLACES_API_KEY)
+        }
+    }
+
+    private fun onSearchCalled() {
+        startActivityForResult(autoCompletePlaceIntent, AUTOCOMPLETE_REQUEST_CODE)
     }
 
     private fun setUpDagger() { AndroidInjection.inject(this) }
