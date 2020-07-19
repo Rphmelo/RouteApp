@@ -1,8 +1,9 @@
-package com.rphmelo.routeapp
+package com.rphmelo.routeapp.util
 
 import android.app.AlertDialog
 import android.content.Context
 import android.content.DialogInterface
+import com.rphmelo.routeapp.R
 
 object DialogUtil {
     fun showMessageDialog(context: Context, message: String? = null) {

@@ -3,10 +3,12 @@ package com.rphmelo.routeapp.di.modules
 import android.content.Context
 import android.content.Intent
 import com.google.android.libraries.places.api.Places
+import com.google.android.libraries.places.api.model.LocationRestriction
 import com.google.android.libraries.places.api.model.Place
 import com.google.android.libraries.places.api.net.PlacesClient
 import com.google.android.libraries.places.widget.Autocomplete
 import com.google.android.libraries.places.widget.model.AutocompleteActivityMode
+import com.rphmelo.routeapp.Constants.PLACES_API_COUNTRY
 import dagger.Module
 import dagger.Provides
 
@@ -19,7 +21,7 @@ class PlacesModule {
     }
 
     @Provides
-    fun provideAutoCompleteIntent(context: Context): Intent {
+    fun provideAutoCompleteIntent(): Autocomplete.IntentBuilder {
         val fields: List<Place.Field> = listOf(
             Place.Field.ID,
             Place.Field.NAME,
@@ -27,10 +29,8 @@ class PlacesModule {
             Place.Field.LAT_LNG
         )
 
-        return Autocomplete.IntentBuilder(
-            AutocompleteActivityMode.FULLSCREEN, fields
-        ).setCountry("BR").build(context)
+        return Autocomplete.IntentBuilder(AutocompleteActivityMode.OVERLAY, fields)
+            .setCountry(PLACES_API_COUNTRY)
+
     }
-
-
 }

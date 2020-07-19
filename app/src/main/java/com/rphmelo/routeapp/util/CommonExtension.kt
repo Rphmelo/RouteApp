@@ -1,4 +1,4 @@
-package com.rphmelo.routeapp
+package com.rphmelo.routeapp.util
 
 import android.content.Context
 

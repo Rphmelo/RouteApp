@@ -24,16 +24,35 @@ import com.google.android.libraries.places.widget.Autocomplete
 import com.google.android.libraries.places.widget.AutocompleteActivity
 import com.rphmelo.routeapp.BuildConfig.PLACES_API_KEY
 import com.rphmelo.routeapp.Constants.MAPS_ZOOM_OPTIONS
-import com.rphmelo.routeapp.DialogUtil
+import com.rphmelo.routeapp.util.DialogUtil
 import com.rphmelo.routeapp.R
-import com.rphmelo.routeapp.di.isAccessFineLocationPermissionGranted
-import com.rphmelo.routeapp.di.requestFineLocationPermission
-import com.rphmelo.routeapp.tryRun
+import com.rphmelo.routeapp.util.isAccessFineLocationPermissionGranted
+import com.rphmelo.routeapp.util.requestFineLocationPermission
+import com.rphmelo.routeapp.util.tryRun
 import dagger.android.AndroidInjection
 import kotlinx.android.synthetic.main.activity_maps.*
 import javax.inject.Inject
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
+
+    private lateinit var map: GoogleMap
+    private val placesAddressNotFoundMessage by lazy { getString(R.string.places_address_not_found_message)}
+
+    @Inject
+    lateinit var autoCompletePlaceIntent: Autocomplete.IntentBuilder
+
+    @Inject
+    lateinit var fusedLocationClient: FusedLocationProviderClient
+
+    @Inject
+    lateinit var locationRequest: LocationRequest
+
+    @Inject
+    lateinit var taskLocationSettingsResponse: Task<LocationSettingsResponse>
+
+    private var lastLocation: Location? = null
+
+    private var locationUpdateState = false
 
     companion object {
         private const val LOCATION_PERMISSION_REQUEST_CODE = 101
@@ -51,31 +70,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
             }
         }
     }
-    private lateinit var map: GoogleMap
-    private val placesAddressNotFoundMessage by lazy { getString(R.string.places_address_not_found_message)}
-
-    @Inject
-    lateinit var autoCompletePlaceIntent: Intent
-
-    @Inject
-    lateinit var fusedLocationClient: FusedLocationProviderClient
-
-    @Inject
-    lateinit var locationRequest: LocationRequest
-
-    @Inject
-    lateinit var taskLocationSettingsResponse: Task<LocationSettingsResponse>
-
-    private var lastLocation: Location? = null
-
-    private var locationUpdateState = false
-
     override fun onCreate(savedInstanceState: Bundle?) {
         setUpDagger()
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
         createLocationRequest()
-
         (mapFragment as? SupportMapFragment)?.getMapAsync(this)
         initializePlaces()
     }
@@ -121,11 +120,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
             when (resultCode) {
                 RESULT_OK -> {
                     data?.let {
-                        Autocomplete.getPlaceFromIntent(data)?.latLng?.let {
+                        Autocomplete.getPlaceFromIntent(data).latLng?.let {
                             placeMarkerOnMap(it)
                         }
                     }
-
                 }
                 AutocompleteActivity.RESULT_ERROR -> {
                     DialogUtil.showMessageDialog(this, getString(R.string.error_message))
@@ -237,7 +235,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
     }
 
     private fun onSearchCalled() {
-        startActivityForResult(autoCompletePlaceIntent, AUTOCOMPLETE_REQUEST_CODE)
+        startActivityForResult(autoCompletePlaceIntent.build(this), AUTOCOMPLETE_REQUEST_CODE)
     }
 
     private fun setUpDagger() { AndroidInjection.inject(this) }
