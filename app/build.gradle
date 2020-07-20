@@ -36,9 +36,9 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation 'androidx.appcompat:appcompat:1.1.0'
-    implementation 'androidx.core:core-ktx:1.0.2'
-    implementation 'com.google.android.gms:play-services-maps:17.0.0'
+    implementation "androidx.appcompat:appcompat:$app_compat_version"
+    implementation "androidx.core:core-ktx:$core_ktx_version"
+    implementation "com.google.android.gms:play-services-maps:$play_services_maps_version"
 
     implementation "com.google.android.libraries.places:places:$places_version"
     implementation "com.google.dagger:dagger:$dagger_version"
@@ -46,7 +46,17 @@ dependencies {
     kapt "com.google.dagger:dagger-android-processor:$dagger_version"
     implementation "com.google.dagger:dagger-android-support:$dagger_version"
 
-    testImplementation 'junit:junit:4.12'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.1'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
+    implementation "io.reactivex.rxjava2:rxjava:$rx_java_version"
+    implementation "io.reactivex.rxjava2:rxandroid:$rx_android_version"
+
+    implementation "com.squareup.retrofit2:retrofit:$retrofit_version"
+    implementation "com.squareup.retrofit2:converter-gson:$retrofit_version"
+    implementation "com.google.code.gson:gson:$gson_version"
+
+    implementation "android.arch.lifecycle:extensions:$lifecycle_version"
+    kapt "android.arch.lifecycle:compiler:$lifecycle_version"
+
+    testImplementation "junit:junit:$junit_version"
+    androidTestImplementation "androidx.test.ext:junit:$androidx_junit_version"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$espresso_core_version"
 }
