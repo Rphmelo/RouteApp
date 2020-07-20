@@ -3,6 +3,8 @@ package com.rphmelo.routeapp.di.modules
 import android.content.Context
 import com.google.android.gms.location.*
 import com.google.android.gms.tasks.Task
+import com.rphmelo.routeapp.Constants.LOCATION_UPDATE_FASTEST_INTERVAL
+import com.rphmelo.routeapp.Constants.LOCATION_UPDATE_INTERVAL
 import dagger.Module
 import dagger.Provides
 
@@ -35,8 +37,8 @@ class LocationModule {
     @Provides
     fun provideLocationRequest(): LocationRequest {
         return LocationRequest().apply {
-            interval = 20000
-            fastestInterval = 10000
+            interval = LOCATION_UPDATE_INTERVAL
+            fastestInterval = LOCATION_UPDATE_FASTEST_INTERVAL
             priority = LocationRequest.PRIORITY_HIGH_ACCURACY
         }
     }

@@ -16,6 +16,7 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.gms.tasks.Task
@@ -23,6 +24,8 @@ import com.google.android.libraries.places.api.Places
 import com.google.android.libraries.places.widget.Autocomplete
 import com.google.android.libraries.places.widget.AutocompleteActivity
 import com.rphmelo.routeapp.BuildConfig.PLACES_API_KEY
+import com.rphmelo.routeapp.Constants.LOCATION_ADDRESS_MAX_RESULTS
+import com.rphmelo.routeapp.Constants.MAPS_PADDING_OPTIONS
 import com.rphmelo.routeapp.Constants.MAPS_ZOOM_OPTIONS
 import com.rphmelo.routeapp.util.DialogUtil
 import com.rphmelo.routeapp.R
@@ -179,11 +182,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
 
     private fun placeMarkerOnMap(latLng: LatLng) {
         map.apply {
+            clear()
             MarkerOptions().position(latLng).apply {
                 title(getAddress(latLng))
                 addMarker(this)
             }
-            animateMapZoom(latLng)
+            animateMapZoom(latLng, true)
         }
     }
 
@@ -199,7 +203,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         var address = placesAddressNotFoundMessage
 
         tryRun(placesAddressNotFoundMessage) {
-            Geocoder(this).getFromLocation(latLng.latitude, latLng.longitude, 1).run {
+            Geocoder(this).getFromLocation(latLng.latitude, latLng.longitude, LOCATION_ADDRESS_MAX_RESULTS).run {
                 if (isNotEmpty()) { address = this[0].getAddressLine(0) }
             }
         }
@@ -224,8 +228,20 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         DialogUtil.showMessageDialog(this, getString(R.string.permission_denied_message))
     }
 
-    private fun animateMapZoom(latLng: LatLng) {
-        map.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, MAPS_ZOOM_OPTIONS))
+    private fun animateMapZoom(latLng: LatLng, hasPlaceMarkerOnMap: Boolean = false) {
+        val cameraUpdate = if (hasPlaceMarkerOnMap) {
+            val bounds = LatLngBounds.Builder().run {
+                include(latLng)
+                if(hasPlaceMarkerOnMap) {
+                    lastLocation?.let {  include(LatLng(it.latitude, it.longitude)) }
+                }
+                build()
+            }
+            CameraUpdateFactory.newLatLngBounds(bounds, MAPS_PADDING_OPTIONS)
+        } else {
+            CameraUpdateFactory.newLatLngZoom(latLng, MAPS_ZOOM_OPTIONS)
+        }
+        map.animateCamera(cameraUpdate)
     }
 
     private fun initializePlaces() {
