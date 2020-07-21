@@ -1,14 +1,12 @@
 package com.rphmelo.routeapp.di.modules
 
 import android.content.Context
-import android.content.Intent
 import com.google.android.libraries.places.api.Places
-import com.google.android.libraries.places.api.model.LocationRestriction
 import com.google.android.libraries.places.api.model.Place
 import com.google.android.libraries.places.api.net.PlacesClient
 import com.google.android.libraries.places.widget.Autocomplete
 import com.google.android.libraries.places.widget.model.AutocompleteActivityMode
-import com.rphmelo.routeapp.Constants.PLACES_API_COUNTRY
+import com.rphmelo.routeapp.common.Constants.PLACES_API_COUNTRY
 import dagger.Module
 import dagger.Provides
 

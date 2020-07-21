@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.rphmelo.routeapp.di.keys.ViewModelKey
 import com.rphmelo.routeapp.ui.MapsViewModel
-import com.rphmelo.routeapp.util.FactoryViewModel
+import com.rphmelo.routeapp.common.FactoryViewModel
 import dagger.Binds
 import dagger.Module
 import dagger.multibindings.IntoMap

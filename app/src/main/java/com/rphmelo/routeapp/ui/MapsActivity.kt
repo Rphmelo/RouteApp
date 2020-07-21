@@ -26,8 +26,11 @@ import com.google.android.libraries.places.widget.Autocomplete
 import com.google.android.libraries.places.widget.AutocompleteActivity
 import com.google.maps.android.PolyUtil
 import com.rphmelo.routeapp.BuildConfig.PLACES_API_KEY
-import com.rphmelo.routeapp.Constants.LOCATION_ADDRESS_MAX_RESULTS
+import com.rphmelo.routeapp.common.Constants.LOCATION_ADDRESS_MAX_RESULTS
 import com.rphmelo.routeapp.R
+import com.rphmelo.routeapp.extensions.isAccessFineLocationPermissionGranted
+import com.rphmelo.routeapp.extensions.requestFineLocationPermission
+import com.rphmelo.routeapp.extensions.tryRun
 import com.rphmelo.routeapp.util.*
 import dagger.android.AndroidInjection
 import kotlinx.android.synthetic.main.activity_maps.*
@@ -63,6 +66,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         observeLastLocation()
         observeDirectionsResult()
         observeDirectionsError()
+        observeLoading()
 
         createLocationRequest()
         (mapFragment as? SupportMapFragment)?.getMapAsync(this)
@@ -169,9 +173,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
 
     private fun observeLastLocation() {
         mapsViewModel.lastLocation.observe(this@MapsActivity, Observer { location ->
-            location?.let {
-                animateMapZoom(LatLng(it.latitude, it.longitude))
-            }
+            location?.let { animateMapZoom(LatLng(it.latitude, it.longitude)) }
         })
     }
 
@@ -243,6 +245,16 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
 
         mapsViewModel.directionsStatusMessageResId.observe(this, Observer { resId ->
             showMessageDialog(resId)
+        })
+    }
+
+    private fun observeLoading() {
+        mapsViewModel.isLoading.observe(this, Observer { isLoading ->
+            if(isLoading) {
+                DialogUtil.getLoading(this)?.show()
+            } else {
+                DialogUtil.loadingDialog?.dismiss()
+            }
         })
     }
 

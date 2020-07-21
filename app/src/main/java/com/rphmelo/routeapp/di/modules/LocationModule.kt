@@ -3,8 +3,8 @@ package com.rphmelo.routeapp.di.modules
 import android.content.Context
 import com.google.android.gms.location.*
 import com.google.android.gms.tasks.Task
-import com.rphmelo.routeapp.Constants.LOCATION_UPDATE_FASTEST_INTERVAL
-import com.rphmelo.routeapp.Constants.LOCATION_UPDATE_INTERVAL
+import com.rphmelo.routeapp.common.Constants.LOCATION_UPDATE_FASTEST_INTERVAL
+import com.rphmelo.routeapp.common.Constants.LOCATION_UPDATE_INTERVAL
 import dagger.Module
 import dagger.Provides
 

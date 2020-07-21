@@ -1,4 +1,4 @@
-package com.rphmelo.routeapp.util
+package com.rphmelo.routeapp.common
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider

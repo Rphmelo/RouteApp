@@ -53,6 +53,7 @@ dependencies {
     implementation "androidx.core:core-ktx:$core_ktx_version"
     implementation "com.google.android.gms:play-services-maps:$play_services_maps_version"
     implementation "com.google.maps.android:android-maps-utils:$maps_utils_version"
+    implementation "androidx.constraintlayout:constraintlayout:$constraint_layout_version"
 
     implementation "com.google.android.libraries.places:places:$places_version"
     implementation "com.google.dagger:dagger:$dagger_version"

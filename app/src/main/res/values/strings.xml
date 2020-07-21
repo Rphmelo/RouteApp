@@ -2,11 +2,13 @@
     <string name="app_name">RouteApp</string>
     <string name="title_activity_maps">Map</string>
     <string name="attention">Atenção</string>
-    <string name="ok">Ok</string>
+    <string name="ok">OK</string>
+    <string name="places_autocomplete_search_hint">Digite um lugar</string>
     <string name="permission_denied_message">Para utilizar o app, você precisa permitir o acesso à localização do aparelho ;)</string>
     <string name="error_message">Ocorreu um probleminha, mas você pode tentar novamente :)</string>
     <string name="error_message_directions">Ocorreu um probleminha ao buscar as rotas, mas você pode tentar novamente :)</string>
     <string name="places_address_not_found_message">Não foi possível carregar o endereço selecionado</string>
-    <string name="search_menu_label">Digite o que procura</string>
+    <string name="search_menu_label">Onde você quer ir?</string>
     <string name="directions_zero_results_status_message">Não foi possível encontrar a rota que você queria :( Mas você pode tentar denovo.</string>
+    <string name="directions_loading_label">Buscando rotas</string>
 </resources>

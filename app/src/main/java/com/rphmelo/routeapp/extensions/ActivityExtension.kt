@@ -1,4 +1,4 @@
-package com.rphmelo.routeapp.util
+package com.rphmelo.routeapp.extensions
 
 import android.app.Activity
 import android.content.pm.PackageManager

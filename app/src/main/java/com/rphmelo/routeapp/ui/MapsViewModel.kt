@@ -11,7 +11,7 @@ import com.google.android.gms.maps.CameraUpdate
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
-import com.rphmelo.routeapp.Constants
+import com.rphmelo.routeapp.common.Constants
 import com.rphmelo.routeapp.R
 import com.rphmelo.routeapp.data.model.DirectionsResultStatus
 import com.rphmelo.routeapp.data.model.directions.DirectionsResponse
@@ -28,6 +28,7 @@ class MapsViewModel @Inject constructor(
     private val locationRequest: LocationRequest
 ) : ViewModel() {
 
+    var isLoading = MutableLiveData<Boolean>()
     var locationUpdateState: MutableLiveData<Boolean> = MutableLiveData()
     var lastLocation: MutableLiveData<Location> = MutableLiveData()
     var directionsResult: MutableLiveData<DirectionsResponse> = MutableLiveData()
@@ -96,6 +97,8 @@ class MapsViewModel @Inject constructor(
             .subscribeOn(Schedulers.io())
             .unsubscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
+            .doOnSubscribe { setLoading(true) }
+            .doOnComplete { setLoading(false) }
             .subscribe(disposableObserver)
     }
 
@@ -103,6 +106,10 @@ class MapsViewModel @Inject constructor(
         if (::disposableObserver.isInitialized) {
             disposableObserver.dispose ()
         }
+    }
+
+    private fun setLoading(loading: Boolean){
+        isLoading.postValue(loading)
     }
 
     private fun verifyDirectionsResultStatus(response: DirectionsResponse) {
