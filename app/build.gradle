@@ -16,10 +16,19 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
     buildTypes {
         debug {
             resValue "string", "google_maps_api_key", "$google_maps_api_key"
             buildConfigField "String", "PLACES_API_KEY", "\"$places_api_key\""
+            buildConfigField "String", "DIRECTIONS_API_KEY", "\"$directions_api_key\""
+
+            buildConfigField "String", "BASE_URL_DIRECTIONS", "\"https://maps.googleapis.com/maps/api/\""
+            buildConfigField "String", "OUTPUT_FORMAT_DIRECTIONS", "\"json\""
         }
 
         release {
@@ -28,6 +37,10 @@ android {
 
             resValue "string", "google_maps_api_key", "$google_maps_api_key"
             buildConfigField "String", "PLACES_API_KEY", "\"$places_api_key\""
+            buildConfigField "String", "DIRECTIONS_API_KEY", "\"$directions_api_key\""
+
+            buildConfigField "String", "BASE_URL_DIRECTIONS", "\"https://maps.googleapis.com/maps/api/\""
+            buildConfigField "String", "OUTPUT_FORMAT_DIRECTIONS", "\"json\""
         }
     }
 
@@ -39,6 +52,7 @@ dependencies {
     implementation "androidx.appcompat:appcompat:$app_compat_version"
     implementation "androidx.core:core-ktx:$core_ktx_version"
     implementation "com.google.android.gms:play-services-maps:$play_services_maps_version"
+    implementation "com.google.maps.android:android-maps-utils:$maps_utils_version"
 
     implementation "com.google.android.libraries.places:places:$places_version"
     implementation "com.google.dagger:dagger:$dagger_version"
@@ -49,9 +63,16 @@ dependencies {
     implementation "io.reactivex.rxjava2:rxjava:$rx_java_version"
     implementation "io.reactivex.rxjava2:rxandroid:$rx_android_version"
 
+    implementation "com.squareup.retrofit2:adapter-rxjava2:$rx_java_adapter_version"
     implementation "com.squareup.retrofit2:retrofit:$retrofit_version"
     implementation "com.squareup.retrofit2:converter-gson:$retrofit_version"
+
     implementation "com.google.code.gson:gson:$gson_version"
+
+    implementation "com.squareup.okhttp3:okhttp:$okhttp3_version"
+    implementation "com.squareup.okhttp3:logging-interceptor:$okhttp3_version"
+
+    implementation "com.jakewharton.timber:timber:$timber_version"
 
     implementation "android.arch.lifecycle:extensions:$lifecycle_version"
     kapt "android.arch.lifecycle:compiler:$lifecycle_version"

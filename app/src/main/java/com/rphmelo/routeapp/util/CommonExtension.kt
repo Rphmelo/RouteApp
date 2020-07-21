@@ -6,6 +6,6 @@ fun Context.tryRun(message: String? = null, block: () -> Unit) {
     try {
         block()
     } catch (e: Exception) {
-        DialogUtil.showMessageDialog(this)
+        DialogUtil.showMessageDialog(this, message)
     }
 }

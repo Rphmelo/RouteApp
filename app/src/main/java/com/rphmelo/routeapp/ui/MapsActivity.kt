@@ -3,59 +3,50 @@ package com.rphmelo.routeapp.ui
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.location.Address
 import android.location.Geocoder
-import android.location.Location
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelProviders
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
-import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.gms.tasks.Task
 import com.google.android.libraries.places.api.Places
 import com.google.android.libraries.places.widget.Autocomplete
 import com.google.android.libraries.places.widget.AutocompleteActivity
+import com.google.maps.android.PolyUtil
 import com.rphmelo.routeapp.BuildConfig.PLACES_API_KEY
 import com.rphmelo.routeapp.Constants.LOCATION_ADDRESS_MAX_RESULTS
-import com.rphmelo.routeapp.Constants.MAPS_PADDING_OPTIONS
-import com.rphmelo.routeapp.Constants.MAPS_ZOOM_OPTIONS
-import com.rphmelo.routeapp.util.DialogUtil
 import com.rphmelo.routeapp.R
-import com.rphmelo.routeapp.util.isAccessFineLocationPermissionGranted
-import com.rphmelo.routeapp.util.requestFineLocationPermission
-import com.rphmelo.routeapp.util.tryRun
+import com.rphmelo.routeapp.util.*
 import dagger.android.AndroidInjection
 import kotlinx.android.synthetic.main.activity_maps.*
 import javax.inject.Inject
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
 
+    lateinit var mapsViewModel: MapsViewModel
     private lateinit var map: GoogleMap
     private val placesAddressNotFoundMessage by lazy { getString(R.string.places_address_not_found_message)}
+
+    @Inject
+    lateinit var viewModelFactory: ViewModelProvider.Factory
 
     @Inject
     lateinit var autoCompletePlaceIntent: Autocomplete.IntentBuilder
 
     @Inject
-    lateinit var fusedLocationClient: FusedLocationProviderClient
-
-    @Inject
-    lateinit var locationRequest: LocationRequest
-
-    @Inject
     lateinit var taskLocationSettingsResponse: Task<LocationSettingsResponse>
-
-    private var lastLocation: Location? = null
-
-    private var locationUpdateState = false
 
     companion object {
         private const val LOCATION_PERMISSION_REQUEST_CODE = 101
@@ -63,20 +54,16 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         private const val AUTOCOMPLETE_REQUEST_CODE = 103
     }
 
-    private val locationCallback by lazy {
-        object : LocationCallback() {
-            override fun onLocationResult(locationResult: LocationResult) {
-                super.onLocationResult(locationResult)
-                lastLocation = locationResult.lastLocation
-
-                lastLocation?.let {  animateMapZoom(LatLng(it.latitude, it.longitude)) }
-            }
-        }
-    }
     override fun onCreate(savedInstanceState: Bundle?) {
         setUpDagger()
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
+        configureViewModel()
+
+        observeLastLocation()
+        observeDirectionsResult()
+        observeDirectionsError()
+
         createLocationRequest()
         (mapFragment as? SupportMapFragment)?.getMapAsync(this)
         initializePlaces()
@@ -116,15 +103,23 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQUEST_CHECK_SETTINGS) {
             if (resultCode == Activity.RESULT_OK) {
-                locationUpdateState = true
+                mapsViewModel.setLocationUpdateState(true)
                 startLocationUpdates()
             }
         } else if (requestCode == AUTOCOMPLETE_REQUEST_CODE) {
             when (resultCode) {
                 RESULT_OK -> {
                     data?.let {
-                        Autocomplete.getPlaceFromIntent(data).latLng?.let {
-                            placeMarkerOnMap(it)
+                        Autocomplete.getPlaceFromIntent(data).apply {
+                            latLng?.let { destinationLatLng ->
+                                placeMarkerOnMap(destinationLatLng)
+                                mapsViewModel.apply {
+                                    lastLocation.value?.let { lastLocation ->
+                                        val originLatLng = LatLng(lastLocation.latitude, lastLocation.longitude)
+                                        getDirections(origin = originLatLng, destination = destinationLatLng)
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -138,13 +133,13 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
 
     override fun onPause() {
         super.onPause()
-        fusedLocationClient.removeLocationUpdates(locationCallback)
+        mapsViewModel.removeLocationUpdates()
     }
 
     override fun onResume() {
         super.onResume()
-        if (!locationUpdateState) {
-            startLocationUpdates()
+        mapsViewModel.locationUpdateState.value?.let {
+            if (!it) { startLocationUpdates() }
         }
     }
 
@@ -167,9 +162,22 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         return super.onCreateOptionsMenu(menu)
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        mapsViewModel.onDestroy()
+    }
+
+    private fun observeLastLocation() {
+        mapsViewModel.lastLocation.observe(this@MapsActivity, Observer { location ->
+            location?.let {
+                animateMapZoom(LatLng(it.latitude, it.longitude))
+            }
+        })
+    }
+
     private fun createLocationRequest() {
         taskLocationSettingsResponse.addOnSuccessListener {
-            locationUpdateState = true
+            mapsViewModel.setLocationUpdateState(true)
             startLocationUpdates()
         }
 
@@ -196,14 +204,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
             requestFineLocationPermission(LOCATION_PERMISSION_REQUEST_CODE)
             return
         }
-        fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, null)
+        mapsViewModel.requestLocationUpdates()
     }
 
     private fun getAddress(latLng: LatLng): String {
         var address = placesAddressNotFoundMessage
 
         tryRun(placesAddressNotFoundMessage) {
-            Geocoder(this).getFromLocation(latLng.latitude, latLng.longitude, LOCATION_ADDRESS_MAX_RESULTS).run {
+            getGeoCodeAddressLocation(latLng).run {
                 if (isNotEmpty()) { address = this[0].getAddressLine(0) }
             }
         }
@@ -217,11 +225,29 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
             return
         }
         map.isMyLocationEnabled = true
+        mapsViewModel.requestLastLocation()
+    }
 
-        fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-            lastLocation = location
-            lastLocation?.let {  animateMapZoom(LatLng(it.latitude, it.longitude)) }
-        }
+    private fun observeDirectionsResult() {
+        mapsViewModel.directionsResult.observe(this, Observer {
+            MapsDirectionsUtil.getPolylineOptions(this).addAll(PolyUtil.decode(it.routes[0].overviewPolyline.points)).apply {
+                map.addPolyline(this)
+            }
+        })
+    }
+
+    private fun observeDirectionsError() {
+        mapsViewModel.directionsError.observe(this, Observer { resId ->
+            showMessageDialog(resId)
+        })
+
+        mapsViewModel.directionsStatusMessageResId.observe(this, Observer { resId ->
+            showMessageDialog(resId)
+        })
+    }
+
+    private fun showMessageDialog(resId: Int) {
+        DialogUtil.showMessageDialog(this, getString(resId))
     }
 
     private fun handlePermissionRejected() {
@@ -229,19 +255,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
     }
 
     private fun animateMapZoom(latLng: LatLng, hasPlaceMarkerOnMap: Boolean = false) {
-        val cameraUpdate = if (hasPlaceMarkerOnMap) {
-            val bounds = LatLngBounds.Builder().run {
-                include(latLng)
-                if(hasPlaceMarkerOnMap) {
-                    lastLocation?.let {  include(LatLng(it.latitude, it.longitude)) }
-                }
-                build()
-            }
-            CameraUpdateFactory.newLatLngBounds(bounds, MAPS_PADDING_OPTIONS)
-        } else {
-            CameraUpdateFactory.newLatLngZoom(latLng, MAPS_ZOOM_OPTIONS)
+        if(::map.isInitialized) {
+            map.animateCamera(mapsViewModel.getCameraUpdateOptions(latLng, hasPlaceMarkerOnMap))
         }
-        map.animateCamera(cameraUpdate)
     }
 
     private fun initializePlaces() {
@@ -252,6 +268,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
 
     private fun onSearchCalled() {
         startActivityForResult(autoCompletePlaceIntent.build(this), AUTOCOMPLETE_REQUEST_CODE)
+    }
+
+    private fun configureViewModel() {
+        mapsViewModel = ViewModelProviders.of(this, viewModelFactory).get(MapsViewModel::class.java)
+    }
+
+    private fun getGeoCodeAddressLocation(latLng: LatLng): List<Address> {
+        return Geocoder(this).getFromLocation(latLng.latitude, latLng.longitude, LOCATION_ADDRESS_MAX_RESULTS)
     }
 
     private fun setUpDagger() { AndroidInjection.inject(this) }

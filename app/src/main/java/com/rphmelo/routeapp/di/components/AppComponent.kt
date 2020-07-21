@@ -1,10 +1,7 @@
 package com.rphmelo.routeapp.di.components
 
 import com.rphmelo.routeapp.RouteApp
-import com.rphmelo.routeapp.di.modules.ActivityModule
-import com.rphmelo.routeapp.di.modules.AppModule
-import com.rphmelo.routeapp.di.modules.LocationModule
-import com.rphmelo.routeapp.di.modules.PlacesModule
+import com.rphmelo.routeapp.di.modules.*
 import dagger.BindsInstance
 import dagger.Component
 import dagger.android.support.AndroidSupportInjectionModule
@@ -16,7 +13,9 @@ import javax.inject.Singleton
     ActivityModule::class,
     LocationModule::class,
     AppModule::class,
-    PlacesModule::class
+    PlacesModule::class,
+    ViewModelModule::class,
+    ApiModule::class
 ])
 interface AppComponent {
 
